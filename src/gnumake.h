@@ -46,14 +46,16 @@ typedef char *(*gmk_func_ptr)(const char *nm, unsigned int argc, char **argv);
   There will only be one unload method invoked regardless of the number of
   setup methods within the object.  */
 
-#ifdef _WIN32
-# ifdef GMK_BUILDING_MAKE
-#  define GMK_EXPORT  __declspec(dllexport)
+#ifndef GMK_EXPORT
+# ifdef _WIN32
+#  ifdef GMK_BUILDING_MAKE
+#   define GMK_EXPORT  __declspec(dllexport)
+#  else
+#   define GMK_EXPORT  __declspec(dllimport)
+#  endif
 # else
-#  define GMK_EXPORT  __declspec(dllimport)
+#  define GMK_EXPORT
 # endif
-#else
-# define GMK_EXPORT
 #endif
 
 /* Free memory returned by the gmk_expand() and gmk_free() functions.  */
@@ -84,8 +86,11 @@ GMK_EXPORT char *gmk_expand (const char *str);
    The FLAGS value may be GMK_FUNC_DEFAULT, or one or more of the following
    flags OR'd together:
 
-     GMK_FUNC_NOEXPAND: the arguments to the function will be not be expanded
-                        before FUNC is called.
+     GMK_FUNC_NOEXPAND:  the arguments to the function will be not be expanded
+                         before FUNC is called.
+     GMK_FUNC_DIRECTIVE: adds func as as 'directive' instead of a 'function';
+                         directives are line-level constructs like `include` or
+                         `load`.
 */
 GMK_EXPORT void gmk_add_function (const char *name, gmk_func_ptr func,
                                   unsigned int min_args, unsigned int max_args,
@@ -93,5 +98,6 @@ GMK_EXPORT void gmk_add_function (const char *name, gmk_func_ptr func,
 
 #define GMK_FUNC_DEFAULT    0x00
 #define GMK_FUNC_NOEXPAND   0x01
+#define GMK_FUNC_DIRECTIVE  0x02
 
 #endif  /* _GNUMAKE_H_ */

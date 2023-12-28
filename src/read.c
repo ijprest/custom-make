@@ -981,6 +981,10 @@ eval (struct ebuffer *ebuf, int set_default)
 
           continue;
         }
+      else if(!is_rule && handle_function(p, wlen))
+        {
+
+        }
 
       /* This line starts with a tab but was not caught above because there
          was no preceding target, and the line might have been usable as a

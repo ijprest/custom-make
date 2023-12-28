@@ -37,6 +37,7 @@ struct function_table_entry
     unsigned int expand_args:1;
     unsigned int alloc_fn:1;
     unsigned int adds_command:1;
+    unsigned int is_directive:1;
   };
 
 static unsigned long
@@ -2484,6 +2485,51 @@ expand_builtin_function (char *o, unsigned int argc, char **argv,
   return o;
 }
 
+/* Check for a directive invocation in P.  P points at the beginning of the
+   first token on a line, of length WLEN.  If a directive invocation is found,
+   it is executed and we return nonzero.  If not, return zero.  */
+
+int
+handle_directive (char *p, size_t wlen)
+{
+  const struct function_table_entry *entry_p;
+  int argc;
+  char *arg;
+  char **argv;
+  char *ret;
+
+  entry_p = lookup_function (p);
+
+  if (!entry_p)
+    return 0;
+
+  if (!entry_p->is_directive)
+    return 0;
+
+  /* The minimum_ & maximum_args parameters are ignored for directives; we call
+     the function with a single parameter pointing to the remainder of the line
+     after the directive token.  */
+  argc = 1;
+  arg = p + wlen;
+  argv = &arg;
+
+  if (entry_p->expand_args)
+    arg = allocated_expand_string (arg);
+
+  /* We don't actually make use of the returned value, but if it's there, we
+     should free it.  */
+  ret = entry_p->fptr.alloc_func_ptr (entry_p->name, argc, argv);
+  if (ret)
+    free (ret);
+
+
+  if (entry_p->expand_args)
+    free (arg);
+
+  return 1;
+}
+
+
 /* Check for a function invocation in *STRINGP.  *STRINGP points at the
    opening ( or { and is not null-terminated.  If a function invocation
    is found, expand it into the buffer at *OP, updating *OP, incrementing
@@ -2507,6 +2553,9 @@ handle_function (char **op, const char **stringp)
   entry_p = lookup_function (beg);
 
   if (!entry_p)
+    return 0;
+
+  if(entry_p->is_directive)
     return 0;
 
   /* We found a builtin function.  Find the beginning of its arguments (skip
@@ -2725,6 +2774,7 @@ define_new_function (const floc *flocp, const char *name,
   ent->minimum_args = (unsigned char) min;
   ent->maximum_args = (unsigned char) max;
   ent->expand_args = ANY_SET(flags, GMK_FUNC_NOEXPAND) ? 0 : 1;
+  ent->is_directive = ANY_SET(flags, GMK_FUNC_DIRECTIVE) ? 0 : 1;
   ent->alloc_fn = 1;
   /* We don't know what this function will do.  */
   ent->adds_command = 1;
