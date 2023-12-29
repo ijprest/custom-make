@@ -981,9 +981,9 @@ eval (struct ebuffer *ebuf, int set_default)
 
           continue;
         }
-      else if(!is_rule && handle_function(p, wlen))
+      else if(!is_rule && handle_directive(p, wlen))
         {
-
+          continue;
         }
 
       /* This line starts with a tab but was not caught above because there

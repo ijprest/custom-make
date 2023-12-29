@@ -144,6 +144,7 @@ char *allocated_expand_variable_for_file (const char *name, size_t length, struc
 
 /* function.c */
 int handle_function (char **op, const char **stringp);
+int handle_directive (char *p, size_t length);
 int pattern_matches (const char *pattern, const char *percent, const char *str);
 char *subst_expand (char *o, const char *text, const char *subst,
                     const char *replace, size_t slen, size_t rlen,
