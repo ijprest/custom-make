@@ -2489,7 +2489,7 @@ expand_builtin_function (char *o, unsigned int argc, char **argv,
    it is executed and we return nonzero.  If not, return zero.  */
 
 int
-handle_directive (char *p, size_t wlen)
+handle_directive (char *p, size_t length)
 {
   const struct function_table_entry *entry_p;
   int argc;
@@ -2509,10 +2509,14 @@ handle_directive (char *p, size_t wlen)
      the function with a single parameter pointing to the remainder of the line
      after the directive token.  */
   argc = 1;
-  arg = p + wlen;
+  arg = p + length;
   argv = &arg;
 
-  if (entry_p->expand_args)
+  /* Skip past any whitespace.  */
+  arg = find_next_token(&arg, &length);
+
+  /* Expand the argument, if necessary.  */
+  if (entry_p->expand_args && arg)
     arg = allocated_expand_string (arg);
 
   /* We don't actually make use of the returned value, but if it's there, we
@@ -2521,8 +2525,7 @@ handle_directive (char *p, size_t wlen)
   if (ret)
     free (ret);
 
-
-  if (entry_p->expand_args)
+  if (entry_p->expand_args && arg)
     free (arg);
 
   return 1;
@@ -2772,7 +2775,7 @@ define_new_function (const floc *flocp, const char *name,
   ent->minimum_args = (unsigned char) min;
   ent->maximum_args = (unsigned char) max;
   ent->expand_args = ANY_SET(flags, GMK_FUNC_NOEXPAND) ? 0 : 1;
-  ent->is_directive = ANY_SET(flags, GMK_FUNC_DIRECTIVE) ? 0 : 1;
+  ent->is_directive = ANY_SET(flags, GMK_FUNC_DIRECTIVE) ? 1 : 0;
   ent->alloc_fn = 1;
   /* We don't know what this function will do.  */
   ent->adds_command = 1;
